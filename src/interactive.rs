@@ -18,8 +18,9 @@ fn input() {
 
     std::io::stdin().read_line(&mut line).unwrap();
     let user_input = String::from(line);
+    let first_token = parse_first_token(&user_input);
 
-    match user_input.trim() {
+    match first_token.trim() {
         "exit" => exit(),
         "cwd" => println!("{}", current_working_directory()),
         "cd" => println!("{}", change_current_directory(user_input)),
@@ -39,8 +40,16 @@ fn change_current_directory(user_input: String) -> String {
     format!("Provided `cd` command => {}, work in progress", user_input.trim())
 }
 
+/// Exit the shell due to an error
 fn exit() {
     process::exit(0x0100);
+}
+
+/// Tokenize a string into a Vector that can be processed
+fn parse_first_token(user_input: &String) -> &str {
+    let v: Vec<&str> = user_input.split(' ').collect();
+    let first = *v.get(0).unwrap();
+    return first.trim();
 }
 
 /// Flush terminal so output is reliable and correct
