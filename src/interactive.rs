@@ -18,8 +18,10 @@ fn input() {
 
     std::io::stdin().read_line(&mut line).unwrap();
     let user_input = String::from(line);
-    let first_token = parse_first_token(&user_input);
+    let tokens = tokenize(&user_input);
+    let first_token = parse_first_token(tokens);
 
+    // Use only the first token to check for the command type
     match first_token.trim() {
         "exit" => exit(),
         "cwd" => println!("{}", current_working_directory()),
@@ -28,16 +30,18 @@ fn input() {
     }
 }
 
-/// Returns the current working directory of the rust terminal
-fn current_working_directory() -> String {
-    current_dir().unwrap().as_os_str().to_os_string().into_string().unwrap()
-}
-
 /// Changes the current directory based on the provided input
 fn change_current_directory(user_input: String) -> String {
     // check string is made up of correctly
     // set_current_dir("/workdir");
+    // TODO - move into file in idiomatic rust manner
     format!("Provided `cd` command => {}, work in progress", user_input.trim())
+}
+
+/// Returns the current working directory of the rust terminal
+pub fn current_working_directory() -> String {
+    // TODO - move into file in idiomatic rust manner
+    current_dir().unwrap().as_os_str().to_os_string().into_string().unwrap()
 }
 
 /// Exit the shell due to an error
@@ -46,10 +50,14 @@ fn exit() {
 }
 
 /// Tokenize a string into a Vector that can be processed
-fn parse_first_token(user_input: &String) -> &str {
-    let v: Vec<&str> = user_input.split(' ').collect();
-    let first = *v.get(0).unwrap();
+fn parse_first_token(tokens: Vec<&str>) -> &str {
+    let first = *tokens.get(0).unwrap();
     return first.trim();
+}
+
+/// Parse the command out into individual tokens
+fn tokenize(user_input: &String) -> Vec<&str> {
+    user_input.split(' ').collect()
 }
 
 /// Flush terminal so output is reliable and correct
