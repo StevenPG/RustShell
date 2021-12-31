@@ -26,6 +26,7 @@ fn input() {
     match first_token.trim() {
         "exit" => exit(),
         "env" => env(),
+        // TODO - do `ls` command
         "cwd" => println!("{}", current_working_directory()),
         "cd" => println!("{}", change_current_directory(tokens.clone())),
         _ => println!("Invalid Command, unable to match."),
@@ -40,6 +41,9 @@ fn change_current_directory(tokens: Vec<&str>) -> String {
     if !tokens.get(0).unwrap().eq(&String::from("cd")) {
         return format!("Something went wrong, this is not a valid `cd` command, `cd /my/directory`");
     }
+
+    // TODO - figure out whether to keep this, this idea doesn't work. Rust using chdir
+    // TODO - change this to verify something exists and then keep track of cwd in program
 
     // Check whether this is an absolute or relative path
     let path = *tokens.get(1).unwrap();
