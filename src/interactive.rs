@@ -1,5 +1,5 @@
 use std::io::{stdout, Write};
-use std::process;
+use std::{fs, process};
 
 use std::env::{current_dir, set_current_dir};
 use std::path::Path;
@@ -25,11 +25,31 @@ fn input() {
     // Use only the first token to check for the command type
     match first_token.trim() {
         "exit" => exit(),
+        "help" => help(),
         "env" => env(),
-        // TODO - do `ls` command
+        "ls" => ls(),
         "cwd" => println!("{}", current_working_directory()),
         "cd" => println!("{}", change_current_directory(tokens.clone())),
         _ => println!("Invalid Command, unable to match."),
+    }
+}
+
+/// Prints out a list of commands
+fn help() {
+    println!("{}", "  exit - exits the program");
+    println!("{}", "  help - prints out the available options");
+    println!("{}", "  env  - prints out all visible environment variables");
+    println!("{}", "  ls   - prints out every file in the current directory");
+    println!("{}", "  cwd  - display the current working directory");
+    println!("{}", "  cd   - changes the active shell directory");
+}
+
+/// Print out everything in the current directory
+fn ls() {
+    let paths = fs::read_dir("./").unwrap();
+
+    for path in paths {
+        println!("{}", path.unwrap().path().display())
     }
 }
 
