@@ -1,18 +1,19 @@
 use std::io::{stdout, Write};
 use std::{fs, process};
 
-use std::env::{current_dir, set_current_dir};
+use std::env::current_dir;
 use std::path::Path;
 
 /// Main "shell loop"
 pub fn shell_loop() {
+    let mut current_directory = current_working_directory();
     loop {
-        input()
+        input(&mut current_directory)
     }
 }
 
 /// Takes input and performs a shell operation based on the string input
-fn input() {
+fn input(current_directory: &mut String) {
     let mut line = String::new();
     print!("> ");
     flush();
@@ -27,9 +28,9 @@ fn input() {
         "exit" => exit(),
         "help" => help(),
         "env" => env(),
-        "ls" => ls(),
-        "cwd" => println!("{}", current_working_directory()),
-        "cd" => println!("{}", change_current_directory(tokens.clone())),
+        "ls" => ls(current_directory),
+        "cwd" => println!("{}", &current_directory),
+        "cd" => println!("{}", change_current_directory(tokens.clone(), current_directory)),
         _ => println!("Invalid Command, unable to match."),
     }
 }
@@ -45,16 +46,26 @@ fn help() {
 }
 
 /// Print out everything in the current directory
-fn ls() {
-    let paths = fs::read_dir("./").unwrap();
+fn ls(current_directory: &String) {
+    println!("CurrDir:{}", current_directory);
+    let paths_result = fs::read_dir(&Path::new(current_directory));
 
-    for path in paths {
-        println!("{}", path.unwrap().path().display())
+    println!("{:?}", paths_result);
+
+    match paths_result {
+        Err(why) => {
+            format!("! {:?}", why.kind());
+        },
+        Ok(paths) => for path in paths {
+            let cleaned_path = path.unwrap().path().to_str().unwrap().replace(current_directory, "");
+            println!(".{}", cleaned_path)
+        },
     }
 }
 
 /// Changes the current directory based on the provided input
-fn change_current_directory(tokens: Vec<&str>) -> String {
+fn change_current_directory(tokens: Vec<&str>, current_directory: &mut String) -> String {
+    println!("InProg::current_directory->{}", current_directory);
     if tokens.len() != 2 {
         return format!("Invalid arguments supplied to `cd` command, Ex. `cd /my/directory`");
     }
@@ -62,39 +73,20 @@ fn change_current_directory(tokens: Vec<&str>) -> String {
         return format!("Something went wrong, this is not a valid `cd` command, `cd /my/directory`");
     }
 
-    // TODO - figure out whether to keep this, this idea doesn't work. Rust using chdir
-    // TODO - change this to verify something exists and then keep track of cwd in program
-
     // Check whether this is an absolute or relative path
     let path = *tokens.get(1).unwrap();
 
     if path.starts_with('/') {
-        let new_root = Path::new(path);
-        let result = set_current_dir(new_root);
-        if result.is_err() {
-            format!("Error changing to {} => {}", path, result.as_ref().err().unwrap())
-        } else {
-            format!("Changed our directory to {}", path)
-        }
+        current_directory.clear();
+        current_directory.push_str(path);
+        format!("Changed our directory to {}", path)
     } else {
-        let current_path = current_working_directory();
-        let new_path = format!("{}/{}", current_path, path);
-        let _new_root = Path::new(&new_path);
-        let result = set_current_dir(_new_root);
-        if result.is_err() {
-            format!("Error changing to {} => {}", new_path, result.as_ref().err().unwrap())
-        } else {
-            format!("Changed our directory to {}", new_path)
-        }
+        format!("Redo and prepend /")
     }
-
-    // set_current_dir("/workdir");
-    // TODO - move into file in idiomatic rust manner
 }
 
 /// Returns the current working directory of the rust terminal
 pub fn current_working_directory() -> String {
-    // TODO - move into file in idiomatic rust manner
     current_dir().unwrap().as_os_str().to_os_string().into_string().unwrap()
 }
 
@@ -105,14 +97,12 @@ fn exit() {
 
 /// Tokenize a string into a Vector that can be processed
 fn parse_first_token<'a>(tokens: &'a Vec<&str>) -> &'a str {
-    // TODO - move into file in idiomatic rust manner
     let first = *tokens.get(0).unwrap();
     return first.trim();
 }
 
 /// Parse the command out into individual tokens
 fn tokenize(user_input: &String) -> Vec<&str> {
-    // TODO - move into file in idiomatic rust manner
     user_input.split(' ').collect()
 }
 
@@ -127,7 +117,6 @@ fn flush() {
 
 /// Prints the current configured environment variables
 fn env() {
-    // TODO - move into file in idiomatic rust manner
     for var in std::env::vars() {
         println!("{}={}", var.0, var.1);
     }
